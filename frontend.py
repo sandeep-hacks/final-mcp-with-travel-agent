@@ -14,6 +14,15 @@ if PROJECT_ROOT not in sys.path:
 
 load_dotenv(os.path.join(PROJECT_ROOT, ".env"), override=True)
 
+# Bridge Streamlit Cloud secrets to environment variables
+try:
+    if hasattr(st, "secrets"):
+        for sec_k, sec_v in st.secrets.items():
+            if isinstance(sec_v, str):
+                os.environ[sec_k] = sec_v
+except Exception:
+    pass
+
 from main import app
 
 # ============================================================

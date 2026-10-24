@@ -5,10 +5,15 @@ import os
 from typing import TypedDict, Annotated
 import operator
 import asyncio
-import psycopg
 from langgraph.graph import StateGraph, START, END
-from langgraph.checkpoint.postgres import PostgresSaver
 from langgraph.checkpoint.memory import MemorySaver
+
+try:
+    import psycopg
+    from langgraph.checkpoint.postgres import PostgresSaver
+except ImportError:
+    psycopg = None
+    PostgresSaver = None
 from langchain_core.messages import (
     AnyMessage,
     HumanMessage,
@@ -352,7 +357,7 @@ graph.add_edge("itinerary_agent", END)
 
 # Persistent connection so both CLI and Streamlit can share the compiled app
 checkpointer = None
-if DATABASE_URL:
+if DATABASE_URL and PostgresSaver is not None and psycopg is not None:
     try:
         _conn = psycopg.connect(DATABASE_URL)
         checkpointer = PostgresSaver(_conn)
@@ -362,7 +367,7 @@ if DATABASE_URL:
         print(f"Warning: Failed to connect to PostgreSQL ({e}). Falling back to in-memory checkpointer.")
         checkpointer = MemorySaver()
 else:
-    print("No DATABASE_URL found. Using in-memory checkpointer.")
+    print("PostgreSQL not configured or library unavailable. Using in-memory checkpointer.")
     checkpointer = MemorySaver()
 
 app = graph.compile(checkpointer=checkpointer)
