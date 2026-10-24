@@ -1,0 +1,29 @@
+# Environments & Virtual Envs
+.venv/
+venv/
+langgraph_env3/
+aviationstack-mcp/.venv/
+env/
+ENV/
+
+# Secrets & Environment variables
+.env
+.env.*
+tools/.env
+aviationstack-mcp/.env
+!.env.example
+
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# OS Artifacts
+.DS_Store
+Thumbs.db
+
+# Generated trip plans
+travel_plans/travel_plan_*.md
+!travel_plans/.gitkeep
