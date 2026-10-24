@@ -26,16 +26,20 @@ def get_current_weather(city: str):
 
     data = response.json()
 
-    if response.status_code != 200:
-        return data
+    if response.status_code != 200 or "main" not in data:
+        return {
+            "status": "not_found",
+            "city": city,
+            "message": data.get("message", "Weather data unavailable")
+        }
 
     return {
-        "city": data["name"],
+        "city": data.get("name", city),
         "temperature_c": data["main"]["temp"],
         "feels_like_c": data["main"]["feels_like"],
         "humidity": data["main"]["humidity"],
-        "condition": data["weather"][0]["description"],
-        "wind_speed": data["wind"]["speed"]
+        "condition": data["weather"][0]["description"] if "weather" in data and len(data["weather"]) > 0 else "clear",
+        "wind_speed": data["wind"]["speed"] if "wind" in data else 0
     }
 
 
@@ -53,30 +57,41 @@ def get_forecast(city: str):
         "units": "metric"
     }
 
-    response = requests.get(
-        url,
-        params=params
-    )
-
-    data = response.json()
-
-    forecast = []
-
-    # Return first 5 forecast entries
-    for item in data["list"][:5]:
-
-        forecast.append(
-            {
-                "datetime": item["dt_txt"],
-                "temperature": item["main"]["temp"],
-                "weather": item["weather"][0]["description"]
-            }
+    try:
+        response = requests.get(
+            url,
+            params=params,
+            timeout=10
         )
+        data = response.json()
 
-    return {
-        "city": city,
-        "forecast": forecast
-    }
+        if response.status_code != 200 or "list" not in data:
+            return {
+                "status": "not_found",
+                "city": city,
+                "forecast": []
+            }
+
+        forecast = []
+        for item in data.get("list", [])[:5]:
+            forecast.append(
+                {
+                    "datetime": item.get("dt_txt", ""),
+                    "temperature": item.get("main", {}).get("temp", "N/A"),
+                    "weather": item.get("weather", [{}])[0].get("description", "clear")
+                }
+            )
+
+        return {
+            "city": city,
+            "forecast": forecast
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "city": city,
+            "forecast": []
+        }
 
 
 
